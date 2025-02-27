@@ -89,31 +89,50 @@ export function getMetaInfo(args = {}) {
 }
 export async function run(args) {
     try {
+        // Normalize path to ensure it starts with '/' but doesn't duplicate
+        const normalizedPath = args.path.startsWith('/') ? args.path : `/${args.path}`;
+        const url = `https://api.timetime.in${normalizedPath}`;
+        console.log(`Making ${args.method} request to: ${url}`);
+        // Common headers
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${args.apiKey}` // Removed the colon after Bearer
+        };
         if (["GET", "DELETE"].includes(args.method.toUpperCase())) {
-            const raw = await fetch(`https://api.timetime.in${args.path}`.replace("//", "/"), {
+            const raw = await fetch(url, {
                 method: args.method,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer: ${args.apiKey}`,
-                },
+                headers
             });
-            console.log(raw);
-            const json = await raw.json();
-            return createMcpResponse(JSON.stringify(json));
+            // Check for non-JSON responses
+            const contentType = raw.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const json = await raw.json();
+                return createMcpResponse(JSON.stringify(json, null, 2));
+            }
+            else {
+                const text = await raw.text();
+                return createMcpResponse(`Status: ${raw.status} ${raw.statusText}\n\nResponse:\n${text || '(empty response)'}`);
+            }
         }
-        const raw = await fetch(`https://api.timetime.in${args.path}`.replace("//", "/"), {
+        const raw = await fetch(url, {
             method: args.method,
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer: ${args.apiKey}`,
-            },
-            body: _normalizeBody(args.body),
+            headers,
+            body: _normalizeBody(args.body)
         });
-        const json = await raw.json();
-        return createMcpResponse(JSON.stringify(json));
+        // Check for non-JSON responses
+        const contentType = raw.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const json = await raw.json();
+            return createMcpResponse(JSON.stringify(json, null, 2));
+        }
+        else {
+            const text = await raw.text();
+            return createMcpResponse(`Status: ${raw.status} ${raw.statusText}\n\nResponse:\n${text || '(empty response)'}`);
+        }
     }
     catch (err) {
-        return createMcpResponse(String(err));
+        console.error('Error in API call:', err);
+        return createMcpResponse(`Error executing API call: ${String(err)}`, true);
     }
 }
 /**
@@ -340,6 +359,62 @@ export function getErrorCodes(args = {}) {
         .map(([code, description]) => `## ${code}
   ${description}`)
         .join("\n\n")}`;
+    return createMcpResponse(response);
+}
+/**
+ * Returns the definition of a specific schema
+ */
+export function getSchemaDefinition(args) {
+    var _a;
+    const { schemaName } = args;
+    // Get the schema from the spec
+    const schemas = ((_a = spec.components) === null || _a === void 0 ? void 0 : _a.schemas) || {};
+    if (!schemas[schemaName]) {
+        return createMcpResponse(`Schema not found: ${schemaName}`, true);
+    }
+    const schema = schemas[schemaName];
+    // Format properties for better readability
+    let propertiesDescription = '';
+    if (schema.properties) {
+        propertiesDescription = Object.entries(schema.properties)
+            .map(([propName, propSchema]) => {
+            const required = schema.required && schema.required.includes(propName) ? '(Required)' : '';
+            const propDetails = propSchema;
+            // Handle references to other schemas
+            let typeInfo = propDetails.type || 'Not specified';
+            if (propDetails.$ref) {
+                const refName = propDetails.$ref.split('/').pop();
+                typeInfo = `Reference to [${refName}]`;
+            }
+            else if (propDetails.items && propDetails.items.$ref) {
+                const refName = propDetails.items.$ref.split('/').pop();
+                typeInfo = `Array of [${refName}]`;
+            }
+            return `- **${propName}** ${required}: ${propDetails.description || 'No description'}
+    - Type: ${typeInfo}
+    ${propDetails.format ? `- Format: ${propDetails.format}` : ''}
+    ${propDetails.enum ? `- Enum values: ${JSON.stringify(propDetails.enum)}` : ''}
+    ${propDetails.example ? `- Example: ${JSON.stringify(propDetails.example)}` : ''}`;
+        })
+            .join('\n');
+    }
+    // Add example if available
+    const exampleSection = schema.example
+        ? `\n## Example\n\`\`\`json\n${JSON.stringify(schema.example, null, 2)}\n\`\`\``
+        : '';
+    const response = `# Schema: ${schemaName}
+  
+  ## Description
+  ${schema.description || 'No description available'}
+  
+  ## Type
+  ${schema.type || 'Not specified'}
+  ${schema.format ? `\n## Format\n${schema.format}` : ''}
+  
+  ## Properties
+  ${propertiesDescription || 'No properties defined'}
+  ${exampleSection}
+  `;
     return createMcpResponse(response);
 }
 /**

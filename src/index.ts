@@ -9,6 +9,7 @@ import {
   getEndpointDocs,
   getErrorCodes,
   getMetaInfo,
+  getSchemaDefinition,
   run,
   startHere,
 } from "./tools.js";
@@ -97,6 +98,15 @@ const server = new McpServer({
     {},
     getErrorCodes
   );
+
+  server.tool(
+    'get-schema-definition',
+    `Returns a detailed definition of a domain object`, 
+    {
+      schemaName: z.string().describe('The name of the schema that you want to inspect')
+    },
+    getSchemaDefinition,
+  )
 
   server
     .connect(transport)

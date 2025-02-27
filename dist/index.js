@@ -2,7 +2,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { getAuthInfo, getCodeSample, getEndpointDocs, getErrorCodes, getMetaInfo, run, startHere, } from "./tools.js";
+import { getAuthInfo, getCodeSample, getEndpointDocs, getErrorCodes, getMetaInfo, getSchemaDefinition, run, startHere, } from "./tools.js";
 const server = new McpServer({
     name: "timetime-mcp",
     version: "1.0.0",
@@ -40,6 +40,9 @@ const server = new McpServer({
     }, getCodeSample);
     // 5. Get list of possible error codes
     server.tool("get-error-codes", "Returns a list of possible error codes and their description to help the LLM understand how to handle failures.", {}, getErrorCodes);
+    server.tool('get-schema-definition', `Returns a detailed definition of a domain object`, {
+        schemaName: z.string().describe('The name of the schema that you want to inspect')
+    }, getSchemaDefinition);
     server
         .connect(transport)
         .then(() => {
