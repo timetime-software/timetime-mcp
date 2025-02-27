@@ -15,6 +15,17 @@ const server = new McpServer({
  */
 (function main() {
     const transport = new StdioServerTransport();
+    server.prompt("build-timetime-app", { message: z.string() }, ({ message }) => ({
+        messages: [
+            {
+                role: "user",
+                content: {
+                    type: "text",
+                    text: `Please, help me build an app using TimeTime. Aditional context: ${message}`,
+                },
+            },
+        ],
+    }));
     server.tool("start", `Start here to get an overview about the tool and how to interact with it`, {}, startHere);
     server.tool("run", `Call the API directly.
     `, {
@@ -40,8 +51,10 @@ const server = new McpServer({
     }, getCodeSample);
     // 5. Get list of possible error codes
     server.tool("get-error-codes", "Returns a list of possible error codes and their description to help the LLM understand how to handle failures.", {}, getErrorCodes);
-    server.tool('get-schema-definition', `Returns a detailed definition of a domain object`, {
-        schemaName: z.string().describe('The name of the schema that you want to inspect')
+    server.tool("get-schema-definition", `Returns a detailed definition of a domain object`, {
+        schemaName: z
+            .string()
+            .describe("The name of the schema that you want to inspect"),
     }, getSchemaDefinition);
     server
         .connect(transport)

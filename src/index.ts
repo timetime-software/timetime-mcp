@@ -13,6 +13,7 @@ import {
   run,
   startHere,
 } from "./tools.js";
+import { prompt_start } from "./prompts.js";
 
 const server = new McpServer({
   name: "timetime-mcp",
@@ -27,6 +28,18 @@ const server = new McpServer({
  */
 (function main() {
   const transport = new StdioServerTransport();
+
+  server.prompt("build-timetime-app", { message: z.string() }, ({ message }) => ({
+    messages: [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: `Please, help me build an app using TimeTime. Aditional context: ${message}`,
+        },
+      },
+    ],
+  }));
 
   server.tool(
     "start",
@@ -45,7 +58,7 @@ const server = new McpServer({
       body: z.string({}).describe("The STRING body of the request"),
       apiKey: z.string().describe("The API key to use"),
     },
-    run,
+    run
   );
 
   server.tool(
@@ -100,13 +113,15 @@ const server = new McpServer({
   );
 
   server.tool(
-    'get-schema-definition',
-    `Returns a detailed definition of a domain object`, 
+    "get-schema-definition",
+    `Returns a detailed definition of a domain object`,
     {
-      schemaName: z.string().describe('The name of the schema that you want to inspect')
+      schemaName: z
+        .string()
+        .describe("The name of the schema that you want to inspect"),
     },
-    getSchemaDefinition,
-  )
+    getSchemaDefinition
+  );
 
   server
     .connect(transport)
