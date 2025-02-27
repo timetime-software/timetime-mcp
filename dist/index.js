@@ -2,7 +2,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { getAuthInfo, getCodeSample, getEndpointDocs, getErrorCodes, getMetaInfo, } from "./tools.js";
+import { getAuthInfo, getCodeSample, getEndpointDocs, getErrorCodes, getMetaInfo, run, startHere, } from "./tools.js";
 const server = new McpServer({
     name: "timetime-mcp",
     version: "1.0.0",
@@ -15,7 +15,14 @@ const server = new McpServer({
  */
 (function main() {
     const transport = new StdioServerTransport();
-    // 1. Discover available API methods
+    server.tool("start", `Start here to get an overview about the tool and how to interact with it`, {}, startHere);
+    server.tool("run", `Call the API directly.
+    `, {
+        path: z.string().describe("The path to the endpoint to call"),
+        method: z.string().describe("The method to use"),
+        body: z.string({}).describe("The STRING body of the request"),
+        apiKey: z.string().describe("The API key to use"),
+    }, run);
     server.tool("get-meta", "Returns a list of available endpoints and a brief description of each one to help the LLM learn the API structure.", {}, getMetaInfo);
     // 2. Authentication information
     server.tool("get-auth-info", `Returns details about the API authentication scheme, including token type, required header, and format.`, {}, getAuthInfo);

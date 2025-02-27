@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import fetch from "node-fetch";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -8,6 +9,7 @@ import {
   getEndpointDocs,
   getErrorCodes,
   getMetaInfo,
+  run,
   startHere,
 } from "./tools.js";
 
@@ -29,7 +31,20 @@ const server = new McpServer({
     "start",
     `Start here to get an overview about the tool and how to interact with it`,
     {},
-    startHere,
+    startHere
+  );
+
+  server.tool(
+    "run",
+    `Call the API directly.
+    `,
+    {
+      path: z.string().describe("The path to the endpoint to call"),
+      method: z.string().describe("The method to use"),
+      body: z.string({}).describe("The STRING body of the request"),
+      apiKey: z.string().describe("The API key to use"),
+    },
+    run,
   );
 
   server.tool(

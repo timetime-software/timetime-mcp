@@ -15,7 +15,6 @@ function createMcpResponse(text: string, isError: boolean = false) {
   };
 }
 
-
 export function startHere() {
   return createMcpResponse(`
 # Info
@@ -47,6 +46,14 @@ Example request to fetch the API Key owner TimeTime profile:
 GET https://api.timetime.in/v1/me
 Authorization: Bearer tt1.ac507ef948a04fakeApiKey5304fa7b4abd936d8e2add1
 ---
+
+## Important Notes
+
+- A Calendar is a regular Calendar while a event-type is something that can be booked.
+- We use ISO 8601 for all date-times. 
+- We use ISO 3166-1 also for durations for example 1h30m would be PT1H30M
+- repeatingAvailability can be confusing, here is an example: {"timeZone":"Europe/Madrid","weekly":{"FRIDAY":[],"MONDAY":[{"start":"09:00","end":"18:00"}],"SUNDAY":[],"TUESDAY":[{"start":"09:00","end":"18:00"}],"SATURDAY":[],"THURSDAY":[{"start":"09:00","end":"18:00"}],"WEDNESDAY":[{"start":"09:00","end":"18:00"}]}}
+- We do use PUT to create and update resources, create your own UUIDv4 if required
 `);
 }
 
@@ -85,6 +92,24 @@ export function getMetaInfo(args = {}) {
     .join("\n")}`;
 
   return createMcpResponse(response);
+}
+
+export async function run(args: {
+  method: string;
+  apiKey: string;
+  path: string;
+  body: string;
+}) {
+  const raw = await fetch(`https://api.timetime.in/v1/${args.path}`, {
+    method: args.method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer: ${args.apiKey}`,
+    },
+    body: args.body,
+  });
+  const json = await raw.json();
+  return createMcpResponse(json);
 }
 
 /**
