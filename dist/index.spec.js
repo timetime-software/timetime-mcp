@@ -16,8 +16,6 @@ async function main() {
         },
     });
     await client.connect(transport);
-    const response = await client.listResourceTemplates();
-    console.log({ response });
 }
 main();
 //# sourceMappingURL=index.spec.js.map

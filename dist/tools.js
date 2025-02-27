@@ -86,6 +86,17 @@ export function getMetaInfo(args = {}) {
     return createMcpResponse(response);
 }
 export async function run(args) {
+    if (!args.body) {
+        const raw = await fetch(`https://api.timetime.in/v1/${args.path}`, {
+            method: args.method,
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer: ${args.apiKey}`,
+            },
+        });
+        const json = await raw.json();
+        return createMcpResponse(json);
+    }
     const raw = await fetch(`https://api.timetime.in/v1/${args.path}`, {
         method: args.method,
         headers: {
