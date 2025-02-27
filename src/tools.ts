@@ -101,7 +101,7 @@ export async function run(args: {
   body: string;
 }) {
   
-  if (!args.body) {
+  if (['GET', 'DELETE'].includes(args.method.toUpperCase())) {
     const raw = await fetch(`https://api.timetime.in/v1/${args.path}`, {
       method: args.method,
       headers: {
