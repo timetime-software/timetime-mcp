@@ -86,7 +86,7 @@ export function getMetaInfo(args = {}) {
     return createMcpResponse(response);
 }
 export async function run(args) {
-    if (!args.body) {
+    if (['GET', 'DELETE'].includes(args.method.toUpperCase())) {
         const raw = await fetch(`https://api.timetime.in/v1/${args.path}`, {
             method: args.method,
             headers: {
