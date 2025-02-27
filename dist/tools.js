@@ -3,6 +3,7 @@ import { spec } from "./spec.js";
  * Creates a properly formatted MCP response with text content
  */
 function createMcpResponse(text, isError = false) {
+    console.log(text);
     return {
         content: [
             {
@@ -52,6 +53,7 @@ Authorization: Bearer tt1.ac507ef948a04fakeApiKey5304fa7b4abd936d8e2add1
 - We use ISO 3166-1 also for durations for example 1h30m would be PT1H30M
 - repeatingAvailability can be confusing, here is an example: {"timeZone":"Europe/Madrid","weekly":{"FRIDAY":[],"MONDAY":[{"start":"09:00","end":"18:00"}],"SUNDAY":[],"TUESDAY":[{"start":"09:00","end":"18:00"}],"SATURDAY":[],"THURSDAY":[{"start":"09:00","end":"18:00"}],"WEDNESDAY":[{"start":"09:00","end":"18:00"}]}}
 - We do use PUT to create and update resources, create your own UUIDv4 if required
+- when getting availability startTime is only the date yyyy-mm-dd (do not use full UTC string);
 `);
 }
 /**
@@ -86,27 +88,33 @@ export function getMetaInfo(args = {}) {
     return createMcpResponse(response);
 }
 export async function run(args) {
-    if (['GET', 'DELETE'].includes(args.method.toUpperCase())) {
-        const raw = await fetch(`https://api.timetime.in/v1/${args.path}`, {
+    try {
+        if (["GET", "DELETE"].includes(args.method.toUpperCase())) {
+            const raw = await fetch(`https://api.timetime.in${args.path}`.replace("//", "/"), {
+                method: args.method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer: ${args.apiKey}`,
+                },
+            });
+            console.log(raw);
+            const json = await raw.json();
+            return createMcpResponse(JSON.stringify(json));
+        }
+        const raw = await fetch(`https://api.timetime.in${args.path}`.replace("//", "/"), {
             method: args.method,
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer: ${args.apiKey}`,
             },
+            body: _normalizeBody(args.body),
         });
         const json = await raw.json();
-        return createMcpResponse(json);
+        return createMcpResponse(JSON.stringify(json));
     }
-    const raw = await fetch(`https://api.timetime.in/v1/${args.path}`, {
-        method: args.method,
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer: ${args.apiKey}`,
-        },
-        body: args.body,
-    });
-    const json = await raw.json();
-    return createMcpResponse(json);
+    catch (err) {
+        return createMcpResponse(String(err));
+    }
 }
 /**
  * Returns authentication information for the API
@@ -333,5 +341,15 @@ export function getErrorCodes(args = {}) {
   ${description}`)
         .join("\n\n")}`;
     return createMcpResponse(response);
+}
+/**
+ * Normalizes the body to a valid object that can be passed to fetch.
+ * Body can be a JSON string or a valid object.
+ */
+function _normalizeBody(body) {
+    if (typeof body === "string") {
+        return body;
+    }
+    return JSON.stringify(body);
 }
 //# sourceMappingURL=tools.js.map
