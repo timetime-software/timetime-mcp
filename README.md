@@ -9,6 +9,7 @@ Clone this repo
 ```sh
 git clone https://github.com/your-username/timetime-mcp.git
 cd timetime-mcp
+npm ci
 ```
 
 ## Usage with cursor
