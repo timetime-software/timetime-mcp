@@ -40,4 +40,5 @@ Authorization: Bearer tt1.ac507ef948a04fakeApiKey5304fa7b4abd936d8e2add1
 - Help the user to build an application.
 - The user might have created resources and calendars with the web app, so you can ask the user to provide the resourceId or calendarId to use in the API calls.
 - You can use the run tool to call the API directly.
+- Not all endpoints need authentication, the Open API spec has the info related to this.
 `;

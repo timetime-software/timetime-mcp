@@ -130,18 +130,43 @@ export function getEndpointDocs(args) {
     const { endpoint } = args;
     // Find the endpoint in the spec
     const [path, method] = endpoint.split(" ");
-    const normalizedMethod = method.toLowerCase();
-    if (!spec.paths[path] || !spec.paths[path][normalizedMethod]) {
-        return createMcpResponse(`Endpoint not found: ${endpoint}`, true);
+    if (!path || !method) {
+        return createMcpResponse(`Invalid endpoint format. Use '/path METHOD' (e.g. '/users GET')`, true);
     }
-    const operation = spec.paths[path][normalizedMethod];
+    const normalizedMethod = method.toLowerCase();
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`; // Ensure path starts with /
+    if (!spec.paths[normalizedPath] || !spec.paths[normalizedPath][normalizedMethod]) {
+        return createMcpResponse(`Endpoint not found: ${method.toUpperCase()} ${normalizedPath}`, true);
+    }
+    const operation = spec.paths[normalizedPath][normalizedMethod];
+    // Determine authentication requirement
+    let authRequirement = "Required"; // Default to required
+    if (operation.security) {
+        if (Array.isArray(operation.security) && operation.security.length === 0) {
+            authRequirement = "Not Required";
+        }
+        // If security exists but is not empty, it implies specific requirements exist, hence 'Required'
+    }
+    else {
+        // If operation.security is not defined, check global security
+        if (!spec.security || (Array.isArray(spec.security) && spec.security.length === 0)) {
+            // Only if no operation security AND no global security is defined
+            // This case might be rare, depending on the API default policy
+            // Assuming global security usually applies if not overridden
+            // Let's stick to 'Required' unless explicitly overridden by security: []
+            // To be more precise, we could make this 'Depends on Global' or check global details
+            // For simplicity for the LLM, 'Required' unless 'security: []' is the clearest
+            // authRequirement = "Not Required (No Global Security)"; 
+        }
+    }
     // Build response
-    const response = `# ${method.toUpperCase()} ${path}
+    const response = `# ${method.toUpperCase()} ${normalizedPath}
   
   ## Overview
   - Operation ID: ${operation.operationId || "Not specified"}
   - Summary: ${operation.summary || "No summary available"}
   - Description: ${operation.description || "No description available"}
+  - Authentication: ${authRequirement}
   
   ## Parameters
   ${(operation.parameters || [])
@@ -159,9 +184,11 @@ export function getEndpointDocs(args) {
         : "No request body"}
   
   ## Responses
-  ${Object.entries(operation.responses || {})
-        .map(([code, response]) => `- ${code}: ${response.description || "No description available"}`)
-        .join("\n")}`;
+  ${Object.entries(operation.responses || {}) // Use operation.responses
+        .map(([code, resp]) => // Renamed variable to avoid conflict
+     `- ${code}: ${resp.description || "No description available"}`)
+        .join("\n") || "No responses defined"}
+`;
     return createMcpResponse(response);
 }
 /**

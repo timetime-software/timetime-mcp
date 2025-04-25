@@ -215,7 +215,7 @@ export const spec = {
                 "tags": ["bookings"]
             },
             "post": {
-                "description": "Creates a new booking for a specific event type at the requested time.\nThis endpoint is typically used by public-facing booking pages to allow users to schedule appointments or services.\nThe booking process includes validation of the requested time slot availability, confirmation of the event type's existence,\nand validation of any required questions or custom fields.\n\nThe request must include an event type ID, start time, and may include additional information such as answers to\ncustom questions, booking notes, and the number of resource units being reserved.",
+                "description": "Creates a new booking for a specific event type at the requested time.\n\nThis endpoint is designed for public access and does not require authentication, making it suitable for its usage in public booking pages.\n\nThis endpoint is typically used by public-facing booking pages to allow users to schedule appointments or services.\nThe booking process includes validation of the requested time slot availability, confirmation of the event type's existence,\nand validation of any required questions or custom fields.\n\nThe request must include an event type ID, start time, and may include additional information such as answers to\ncustom questions, booking notes, and the number of resource units being reserved.",
                 "operationId": "createBooking",
                 "requestBody": {
                     "content": {
