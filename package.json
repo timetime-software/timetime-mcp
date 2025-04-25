@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsc && node dist/index.spec.js"
+    "test": "tsc && node dist/index.spec.js",
+    "postinstall": "sh scripts/generate-mcp-config.sh"
   },
   "keywords": [],
   "author": "iagolast",
